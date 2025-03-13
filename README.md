@@ -1,7 +1,7 @@
 ## Open-Source Variometer using ESP32S3 for XCSoar (WIP)
 
 >[!WARNING]
-> It still hasn't been tested
+> It has not been tested yet
 
 ### Introduction
 This project is an open-source variometer designed to work seamlessly with XCSoar, a popular flight planning and navigation software. 
