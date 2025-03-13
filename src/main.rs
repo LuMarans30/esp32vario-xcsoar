@@ -1,12 +1,12 @@
 use esp_idf_hal::{
-    delay::Delay,
+    //delay::Delay,
     i2c::{I2cConfig, I2cDriver},
     prelude::*,
 };
 use esp_idf_svc::{log::*, sys::*};
 use util::{
-    nmea::{Environment, Motion, NMEAData, NMEASentenceType, Position},
-    sensors::SensorManager,
+    nmea::{NMEAData, NMEASentenceType},
+    //sensors::SensorManager,
 };
 
 //use crate::util::tcp_client;
@@ -24,8 +24,6 @@ mod util {
 fn main() {
     link_patches();
     EspLogger::initialize_default();
-
-    let delay = Delay::new_default();
 
     let peripherals = Peripherals::take().unwrap();
 
@@ -63,6 +61,8 @@ fn main() {
     //TODO: Initialize sensors using sensors.rs
     /* let mut sensor_manager = SensorManager::new().unwrap();
 
+    //let delay = Delay::new_default();
+
     match sensor_manager.init().is_ok() {
         true => log::info!("Sensors initialized successfully"),
         false => log::error!("Failed to initialize sensors"),
@@ -89,8 +89,6 @@ fn scan_devices(i2c: &mut I2cDriver) {
         let result = i2c.write(addr, &[], 1000);
         if result.is_ok() {
             println!("Found device at address: 0x{:02X}", addr);
-        } else {
-            println!("No device found at address: 0x{:02X}", addr);
         }
     }
     println!("Scan complete!");
