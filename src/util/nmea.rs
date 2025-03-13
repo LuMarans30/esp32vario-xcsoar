@@ -1,27 +1,60 @@
 pub struct NMEAData {
-    pub latitude: f32,        // deg
-    pub longitude: f32,       // deg
-    pub altitude: f32,        // m
-    pub speed: f32,           // m/s
-    pub heading: f32,         // deg
-    pub static_pressure: f32, // hPa
-    pub temperature: f32,     // celsius degree
-    pub average_cps: f32,     // m/s
-    pub acceleration_x: f32,  // m/s^2
-    pub acceleration_y: f32,  // m/s^2
-    pub acceleration_z: f32,  // m/s^2
+    latitude: f32,        // deg
+    longitude: f32,       // deg
+    altitude: f32,        // m
+    speed: f32,           // m/s
+    heading: f32,         // deg
+    static_pressure: f32, // hPa
+    temperature: f32,     // celsius degree
+    average_cps: f32,     // m/s
+    acceleration_x: f32,  // m/s^2
+    acceleration_y: f32,  // m/s^2
+    acceleration_z: f32,  // m/s^2
+}
+
+pub enum NMEASentenceType {
+    POV,
+    PEYA,
+    PEYI,
 }
 
 impl NMEAData {
-    pub fn get_data_string(&self, data_type: &str) -> String {
+    pub fn new(
+        latitude: f32,
+        longitude: f32,
+        altitude: f32,
+        speed: f32,
+        heading: f32,
+        static_pressure: f32,
+        temperature: f32,
+        average_cps: f32,
+        acceleration_x: f32,
+        acceleration_y: f32,
+        acceleration_z: f32,
+    ) -> Self {
+        NMEAData {
+            latitude,
+            longitude,
+            altitude,
+            speed,
+            heading,
+            static_pressure,
+            temperature,
+            average_cps,
+            acceleration_x,
+            acceleration_y,
+            acceleration_z,
+        }
+    }
+
+    pub fn get_data_string(&self, data_type: NMEASentenceType) -> String {
         let data = match data_type {
-            "pov" => self.get_pov(),
-            "peya" => self.get_peya(),
-            "peyi" => self.get_peyi(),
-            _ => String::from("Invalid data type"),
+            NMEASentenceType::POV => self.get_pov(),
+            NMEASentenceType::PEYA => self.get_peya(),
+            NMEASentenceType::PEYI => self.get_peyi(),
         };
 
-        let checksum = self.nmea_checksum(&data);
+        let checksum = Self::nmea_checksum(&data);
         format!("{}{}\r\n", data, checksum)
     }
 
@@ -76,7 +109,7 @@ impl NMEAData {
         )
     }
 
-    fn nmea_checksum(&self, msg: &str) -> u8 {
+    fn nmea_checksum(msg: &str) -> u8 {
         msg.chars()
             .skip(1)
             .take_while(|c| *c != '*')
