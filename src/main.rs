@@ -4,7 +4,10 @@ use esp_idf_hal::{
     prelude::*,
 };
 use esp_idf_svc::{log::*, sys::*};
-use util::{nmea::NMEAData, nmea::NMEASentenceType, sensors::SensorManager};
+use util::{
+    nmea::{Environment, Motion, NMEAData, NMEASentenceType, Position},
+    sensors::SensorManager,
+};
 
 //use crate::util::tcp_client;
 
@@ -36,16 +39,18 @@ fn main() {
     scan_devices(&mut i2c);
 
     let nmeadata = NMEAData::new(
-        43.0, 14.0, 1382.0, 2.0, 1.0, 452.0, 19.0, 0.0, 2.0, -1.5, 0.3,
+        NMEAData::build_position(43.0, 14.0, 1382.0),
+        NMEAData::build_motion(2.0, 1.0, 452.0, 19.0, 0.0),
+        NMEAData::build_environment(1013.25, 19.0, 0.0),
     );
 
-    let pov = nmeadata.get_data_string(NMEASentenceType::POV);
+    let pov = nmeadata.get_data_string(NMEASentenceType::Pov);
     println!("{}", pov);
 
-    let peya = nmeadata.get_data_string(NMEASentenceType::PEYA);
+    let peya = nmeadata.get_data_string(NMEASentenceType::Peya);
     println!("{}", peya);
 
-    let peyi = nmeadata.get_data_string(NMEASentenceType::PEYI);
+    let peyi = nmeadata.get_data_string(NMEASentenceType::Peyi);
     println!("{}", peyi);
 
     //TODO: Initialize TCP client using tcp_client.rs
