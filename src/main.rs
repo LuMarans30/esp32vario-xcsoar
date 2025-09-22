@@ -1,40 +1,70 @@
 use esp_idf_hal::{
-    //delay::Delay,
+    delay::Delay,
     i2c::{I2cConfig, I2cDriver},
     prelude::*,
 };
-use esp_idf_svc::{log::*, sys::*};
-use util::{
-    nmea::{NMEAData, NMEASentenceType},
-    //sensors::SensorManager,
-};
+use esp_idf_svc::{eventloop::EspSystemEventLoop, log::*, sys::*};
+use util::nmea::{NMEAData, NMEASentenceType};
 
-//use crate::util::tcp_client;
+use crate::util::wifi;
+
+use anyhow::{bail, Result};
 
 mod util {
     pub mod nmea;
     pub mod sensors;
-    pub mod tcp_client;
+    pub mod wifi;
+}
+
+#[toml_cfg::toml_config]
+pub struct Config {
+    #[default("")]
+    wifi_ssid: &'static str,
+    #[default("")]
+    wifi_psk: &'static str,
 }
 
 /**
  * - Initialize the sensor manager and the TCP client
  * - Send sensor data in NMEA format (via Wi-Fi) to the TCP server (XCSoar)
  */
-fn main() {
+fn main() -> Result<()> {
     link_patches();
     EspLogger::initialize_default();
 
     let peripherals = Peripherals::take().unwrap();
+    let app_config = CONFIG;
 
-    let i2c = peripherals.i2c0;
+    log::info!(
+        "Wi-Fi SSID and password: {} - {}",
+        app_config.wifi_ssid,
+        app_config.wifi_psk
+    );
+
+    let i2c_peripheral = peripherals.i2c0;
     let sda = peripherals.pins.gpio5;
     let scl = peripherals.pins.gpio6;
 
     let config = I2cConfig::new().baudrate(100.kHz().into());
-    let mut i2c = I2cDriver::new(i2c, sda, scl, &config).unwrap();
+    let mut i2c = I2cDriver::new(i2c_peripheral, sda, scl, &config)?;
+    let sysloop = EspSystemEventLoop::take()?;
 
     scan_devices(&mut i2c);
+
+    let _wifi = match wifi::wifi(
+        app_config.wifi_ssid,
+        app_config.wifi_psk,
+        peripherals.modem,
+        sysloop,
+    ) {
+        Ok(inner) => {
+            println!("Connected to Wi-Fi network!");
+            inner
+        }
+        Err(err) => {
+            bail!("Could not connect to Wi-Fi network: {:?}", err)
+        }
+    };
 
     let nmeadata = NMEAData::new(
         NMEAData::build_position(43.0, 14.0, 1382.0),
@@ -43,23 +73,19 @@ fn main() {
     );
 
     let pov = nmeadata.get_data_string(NMEASentenceType::Pov);
-    println!("{}", pov);
-
     let peya = nmeadata.get_data_string(NMEASentenceType::Peya);
-    println!("{}", peya);
-
     let peyi = nmeadata.get_data_string(NMEASentenceType::Peyi);
-    println!("{}", peyi);
 
-    //TODO: Initialize TCP client using tcp_client.rs
+    log::info!("{}\n{}\n{}", pov, peya, peyi);
 
-    //FIXME: Fix Peripherals borrowing (Peripherals::take().unwrap()) since it's not possible
-    //Until the borrowing is fixed, the TCP client cannot be initialized
-    /* let _ = tcp_client::init().unwrap_or_else(|e| panic!("Failed to initialize TCP client: {}", e));
-    (); */
+    let delay = Delay::new_default();
+
+    loop {
+        delay.delay_ms(1000);
+    }
 
     //TODO: Initialize sensors using sensors.rs
-    /* let mut sensor_manager = SensorManager::new().unwrap();
+    /* let mut sensor_manager = SensorManager::new()?;
 
     //let delay = Delay::new_default();
 
@@ -70,7 +96,7 @@ fn main() {
 
     /* loop {
         //let (accel_gyro_data, barometer_data, gps_data) =
-        let barometer_data = sensor_manager.get_measurements().unwrap();
+        let barometer_data = sensor_manager.get_measurements()?;
 
         //println!("accel_gyro_data: {:#?}", accel_gyro_data);
         println!("barometer_data: {:#?}", barometer_data);
