@@ -22,12 +22,7 @@ impl<'a> Sensor<'a> for Gps<'a> {
 
     fn init(&mut self) -> Result<(), EspError> {
         let mut i2c = self.i2c.lock().unwrap();
-        // Configure for NMEA output
-        i2c.write(
-            self.address,
-            &[0xB5, 0x62, 0x06, 0x01, 0x03, 0x00, 0xF0, 0x05, 0x01],
-            BLOCK,
-        )?;
+
         Ok(())
     }
 
@@ -35,16 +30,6 @@ impl<'a> Sensor<'a> for Gps<'a> {
         let mut buffer = [0u8; 32];
         let mut i2c = self.i2c.lock().unwrap();
 
-        i2c.write_read(self.address, &[0xFD], &mut buffer, BLOCK)?;
-
-        // Note: This is a simplified implementation
-        // Real implementation would need to parse NMEA sentences
-        // and handle checksum verification
-        Ok(GpsData {
-            latitude: 0.0,
-            longitude: 0.0,
-            altitude: 0.0,
-            speed: 0.0,
-        })
+        Ok(todo!())
     }
 }

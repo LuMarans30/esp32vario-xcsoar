@@ -69,15 +69,3 @@ impl<'a> SensorManager<'a> {
         ))
     }
 }
-
-pub fn scan_devices(i2c: &mut I2cDriver) {
-    println!("Starting I2C scan...");
-    for addr in 0x08..0x78 {
-        // Write empty message to check device presence
-        let result = i2c.write(addr, &[], 1000);
-        if result.is_ok() {
-            println!("Found device at address: 0x{:02X}", addr);
-        }
-    }
-    println!("Scan complete!");
-}
