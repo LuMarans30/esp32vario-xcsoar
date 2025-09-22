@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["LuMarans"]
 edition = "2021"
 resolver = "2"
-rust-version = "1.77"
+rust-version = "1.82"
 
 [[bin]]
 name = "esp32vario-xcsoar-std"
@@ -29,6 +29,7 @@ esp-idf-hal = "0.44.1"
 embedded-svc = "0.28.0"
 toml-cfg = "0.2.0"
 anyhow = "1.0.100"
+tokio = { version = "1.47.1", features = ["macros", "rt", "rt-multi-thread"] }
 
 [build-dependencies]
 embuild = "0.32.0"
