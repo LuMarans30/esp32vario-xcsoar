@@ -26,33 +26,6 @@ pub fn wifi(
 
     let mut wifi = BlockingWifi::wrap(&mut esp_wifi, sysloop)?;
 
-    wifi.set_configuration(&Configuration::Client(ClientConfiguration::default()))?;
-
-    log::info!("Starting wifi...");
-
-    wifi.start()?;
-
-    log::info!("Scanning...");
-
-    let ap_infos = wifi.scan()?;
-
-    let ours = ap_infos.into_iter().find(|a| a.ssid == ssid);
-
-    let channel = if let Some(ours) = ours {
-        log::info!(
-            "Found configured access point {} on channel {}",
-            ssid,
-            ours.channel
-        );
-        Some(ours.channel)
-    } else {
-        log::info!(
-            "Configured access point {} not found during scanning, will go with unknown channel",
-            ssid
-        );
-        None
-    };
-
     wifi.set_configuration(&Configuration::Client(ClientConfiguration {
         ssid: ssid
             .try_into()
@@ -60,14 +33,24 @@ pub fn wifi(
         password: pass
             .try_into()
             .expect("Could not parse the given password into WiFi config"),
-        channel,
+        //channel,
         auth_method,
         ..Default::default()
     }))?;
 
+    log::info!("Starting wifi...");
+
+    wifi.start()?;
+
     log::info!("Connecting wifi...");
 
     wifi.connect()?;
+
+    while !wifi.is_connected().unwrap() {
+        // Get and print connection configuration
+        let config = wifi.get_configuration().unwrap();
+        println!("Waiting for station {:?}", config);
+    }
 
     log::info!("Waiting for DHCP lease...");
 
